@@ -67,7 +67,7 @@
 <body>
 
     <div class="container">
-        <h1>👋 Welcome to my AJAX app!</h1>
+        <h1>👋 Welcome to my first n8n workflow!</h1>
 
         <p>This page demonstrates an **AJAX GET request** to an n8n webhook.</p>
 
@@ -82,58 +82,67 @@
             <p>Awaiting form submission...</p>
         </div>
         
-        <p style="font-size: small; color: #666; margin-top: 20px;">
-            **AJAX Action Breakdown:**<br>
-            - **Method:** `GET`<br>
-            - **Action URL:** `https://vjoco.app.n8n.cloud/webhook-test/dc386d8a-013f-4c67-abce-30fce91da038`<br>
-            - **Input Name:** `your_question`
-        </p>
-    </div>
+     
 
-    <script>
-        $(document).ready(function() {
-            // Target the form using its ID
-            $('#ajax-form').submit(function(e) {
-                // Prevent the default form submission (which would cause a page reload)
-                e.preventDefault();
-                
-                // Get the data from the form (automatically handles serialization)
-                var formData = $(this).serialize();
-                
-                // Define the webhook URL
-                var webhookUrl = "https://vjoco.app.n8n.cloud/webhook-test/dc386d8a-013f-4c67-abce-30fce91da038";
-                
-                // Update the result area to show loading state
-                $('#ajax-result').html('<p style="color: #007bff;">Sending data... please wait.</p>').removeClass('success error');
+<script>
+    $(document).ready(function() {
+        // Target the form using its ID
+        $('#ajax-form').submit(function(e) {
+            // Prevent the default form submission (which would cause a page reload)
+            e.preventDefault();
+            
+            // Get the data from the form (automatically handles serialization)
+            var formData = $(this).serialize();
+            
+            // Define the webhook URL
+            var webhookUrl = "https://vjoco.app.n8n.cloud/webhook-test/dc386d8a-013f-4c67-abce-30fce91da038";
+            
+            // Update the result area to show loading state
+            $('#ajax-result').html('<p style="color: #007bff;">Sending data... please wait.</p>').removeClass('success error');
 
-                // Perform the AJAX GET request
-                $.ajax({
-                    type: "GET", // Use the GET method as in the original form
-                    url: webhookUrl,
-                    data: formData, // Data from the form (e.g., your_question=value)
+            // Perform the AJAX GET request
+            $.ajax({
+                type: "GET", // Use the GET method as in the original form
+                url: webhookUrl,
+                data: formData, // Data from the form (e.g., your_question=value)
+                
+                // Function to run if the request succeeds (status code 200-299)
+                success: function(response) {
+                    console.log("Success response:", response);
                     
-                    // Function to run if the request succeeds (status code 200-299)
-                    success: function(response) {
-                        console.log("Success response:", response);
-                        // Convert the response to a formatted JSON string for display
-                        var responseText = JSON.stringify(response, null, 2);
+                    var resultHtml = '';
+                    
+                    // --- MODIFICATION START ---
+                    // Check if the response is an array and the first item has an 'output' key
+                    if (Array.isArray(response) && response.length > 0 && response[0].output) {
+                        // Extract the HTML/text content from the 'output' key
+                        resultHtml = response[0].output;
                         
-                        $('#ajax-result').html('**✅ Submission Successful!**<pre>' + responseText + '</pre>')
+                        // Update the result div with the extracted HTML content
+                        $('#ajax-result').html('**✅ Response Content (HTML Rendered):**<hr>' + resultHtml)
                                           .addClass('success');
-                    },
-                    
-                    // Function to run if the request fails (e.g., network error, status code 4xx/5xx)
-                    error: function(xhr, status, error) {
-                        console.error("AJAX Error:", status, error);
-                        var errorMessage = "**❌ Submission Failed!**<br>Status: " + status + "<br>Error: " + error + "<br>Response Text: " + xhr.responseText.substring(0, 100) + "...";
                         
-                        $('#ajax-result').html(errorMessage)
+                    } else {
+                        // Handle unexpected response structure
+                        var responseText = JSON.stringify(response, null, 2);
+                        $('#ajax-result').html('**⚠️ Unexpected Response Structure!**<br>The webhook did not return the expected JSON format (`[{"output": "..."}]`).<br>Raw response:<pre>' + responseText + '</pre>')
                                           .addClass('error');
                     }
-                });
+                    // --- MODIFICATION END ---
+                },
+                
+                // Function to run if the request fails (e.g., network error, status code 4xx/5xx)
+                error: function(xhr, status, error) {
+                    console.error("AJAX Error:", status, error);
+                    var errorMessage = "**❌ Submission Failed!**<br>Status: " + status + "<br>Error: " + error + "<br>Response Text: " + xhr.responseText.substring(0, 100) + "...";
+                    
+                    $('#ajax-result').html(errorMessage)
+                                      .addClass('error');
+                }
             });
         });
-    </script>
+    });
+</script>
 
 </body>
 </html>
