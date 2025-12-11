@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Simple PHP App</title>
+    <title>My Simple PHP App - AJAX Submission</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -44,36 +45,95 @@
         input[type="submit"]:hover {
             background-color: #0056b3;
         }
+        #ajax-result {
+            margin-top: 20px;
+            padding: 15px;
+            min-height: 50px; /* Gives the div a bit of height */
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            text-align: left;
+        }
+        .success {
+            border-color: green;
+            color: green;
+        }
+        .error {
+            border-color: red;
+            color: red;
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>👋 Welcome to my app!</h1>
+        <h1>👋 Welcome to my AJAX app!</h1>
 
-        <?php
-        // Optional: Check if a question was submitted and display a message (for user clarity)
-        if (isset($_GET['your_question']) && $_GET['your_question'] !== '') {
-            $question = htmlspecialchars($_GET['your_question']);
-            echo "<p style='color: green; font-weight: bold;'>Thank you! Your question was sent via GET: '{$question}'</p>";
-        }
-        ?>
+        <p>This page demonstrates an **AJAX GET request** to an n8n webhook.</p>
 
-        <p>This is a simple PHP page demonstrating a GET request to an n8n webhook.</p>
-
-        <form action="https://vjoco.app.n8n.cloud/webhook-test/dc386d8a-013f-4c67-abce-30fce91da038" method="GET">
+        <form id="ajax-form">
             <label for="your_question">Your Question:</label>
             <input type="text" id="your_question" name="your_question" placeholder="Enter your question here..." required>
-            <input type="submit" value="Submit to n8n Webhook">
+            <input type="submit" value="Submit via AJAX">
         </form>
         
+        <h3>AJAX Response:</h3>
+        <div id="ajax-result">
+            <p>Awaiting form submission...</p>
+        </div>
+        
         <p style="font-size: small; color: #666; margin-top: 20px;">
-            **Form Action Breakdown:**<br>
-            - **Method:** `GET` (sends data in the URL query string)<br>
+            **AJAX Action Breakdown:**<br>
+            - **Method:** `GET`<br>
             - **Action URL:** `https://vjoco.app.n8n.cloud/webhook-test/dc386d8a-013f-4c67-abce-30fce91da038`<br>
             - **Input Name:** `your_question`
         </p>
     </div>
+
+    <script>
+        $(document).ready(function() {
+            // Target the form using its ID
+            $('#ajax-form').submit(function(e) {
+                // Prevent the default form submission (which would cause a page reload)
+                e.preventDefault();
+                
+                // Get the data from the form (automatically handles serialization)
+                var formData = $(this).serialize();
+                
+                // Define the webhook URL
+                var webhookUrl = "https://vjoco.app.n8n.cloud/webhook-test/dc386d8a-013f-4c67-abce-30fce91da038";
+                
+                // Update the result area to show loading state
+                $('#ajax-result').html('<p style="color: #007bff;">Sending data... please wait.</p>').removeClass('success error');
+
+                // Perform the AJAX GET request
+                $.ajax({
+                    type: "GET", // Use the GET method as in the original form
+                    url: webhookUrl,
+                    data: formData, // Data from the form (e.g., your_question=value)
+                    
+                    // Function to run if the request succeeds (status code 200-299)
+                    success: function(response) {
+                        console.log("Success response:", response);
+                        // Convert the response to a formatted JSON string for display
+                        var responseText = JSON.stringify(response, null, 2);
+                        
+                        $('#ajax-result').html('**✅ Submission Successful!**<pre>' + responseText + '</pre>')
+                                          .addClass('success');
+                    },
+                    
+                    // Function to run if the request fails (e.g., network error, status code 4xx/5xx)
+                    error: function(xhr, status, error) {
+                        console.error("AJAX Error:", status, error);
+                        var errorMessage = "**❌ Submission Failed!**<br>Status: " + status + "<br>Error: " + error + "<br>Response Text: " + xhr.responseText.substring(0, 100) + "...";
+                        
+                        $('#ajax-result').html(errorMessage)
+                                          .addClass('error');
+                    }
+                });
+            });
+        });
+    </script>
 
 </body>
 </html>
